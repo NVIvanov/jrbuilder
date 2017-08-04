@@ -1,35 +1,39 @@
+package ru.nivanov.jrbuilder.report;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import ru.nivanov.jrbuilder.utils.ReportUtil;
 
 /**
  * @author nivanov
  *         on 31.07.17.
  */
 public class Column {
-    private String displayName, valueFunction, type;
+    private String displayName, valueFunction, type, uuid;
     private Integer width;
 
-    public Column(String displayName, String valueFunction, Integer width, String type) {
+    public Column(String displayName, String valueFunction, Integer width, String type, String uuid) {
         this.displayName = displayName;
         this.valueFunction = valueFunction;
         this.width = width;
         this.type = type;
+        this.uuid = uuid;
     }
 
-    public Element writeField(Document placement) {
+    Element writeField(Document placement) {
         Element fieldElement = placement.createElement("field");
         fieldElement.setAttribute("name", displayName);
         fieldElement.setAttribute("class", type);
         Element fieldDescription = placement.createElement("fieldDescription");
-        fieldDescription.appendChild(placement.createTextNode(ReportUtil.formatTextExpression("")));
+        fieldDescription.appendChild(ReportUtil.formatTextExpression("", placement));
         fieldElement.appendChild(fieldDescription);
         return fieldElement;
     }
 
-    public Element writeColumn(Document placement) {
+    Element writeColumn(Document placement) {
         Element columnElement = placement.createElement("jr:column");
         columnElement.setAttribute("width", width.toString());
-        columnElement.setAttribute("uuid", displayName);
+        columnElement.setAttribute("uuid", uuid);
         Element columnHeader = createHeader(placement);
         columnElement.appendChild(columnHeader);
         Element detailCell = createDetailCell(placement);
@@ -48,7 +52,7 @@ public class Column {
         Element reportElement = createReportElement(placement, 20);
         Element textElement = createTextElement(placement);
         Element textFieldExpression = placement.createElement("textFieldExpression");
-        textFieldExpression.appendChild(placement.createTextNode(ReportUtil.formatTextExpression(valueFunction)));
+        textFieldExpression.appendChild(ReportUtil.formatTextExpression(valueFunction, placement));
         textField.appendChild(reportElement);
         textField.appendChild(textElement);
         textField.appendChild(textFieldExpression);
@@ -64,7 +68,7 @@ public class Column {
         Element reportElement = createReportElement(placement,30);
         Element textElement = createTextElement(placement);
         Element text = placement.createElement("text");
-        text.appendChild(placement.createTextNode(ReportUtil.formatTextExpression(displayName)));
+        text.appendChild(ReportUtil.formatTextExpression(displayName, placement));
         staticText.appendChild(reportElement);
         staticText.appendChild(textElement);
         staticText.appendChild(text);
@@ -90,7 +94,7 @@ public class Column {
 
     @Override
     public String toString() {
-        return "Column{" +
+        return "ru.nivanov.jrbuilder.report.Column{" +
                 "displayName='" + displayName + '\'' +
                 ", valueFunction='" + valueFunction + '\'' +
                 ", type='" + type + '\'' +
@@ -113,4 +117,5 @@ public class Column {
     public Integer getWidth() {
         return width;
     }
+
 }

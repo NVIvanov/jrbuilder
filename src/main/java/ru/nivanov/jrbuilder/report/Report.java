@@ -1,3 +1,5 @@
+package ru.nivanov.jrbuilder.report;
+
 import java.util.List;
 
 /**

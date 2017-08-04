@@ -1,5 +1,8 @@
+package ru.nivanov.jrbuilder.report;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import ru.nivanov.jrbuilder.utils.ReportUtil;
 
 /**
  * @author nivanov
@@ -14,21 +17,21 @@ public class Parameter {
         this.defaultExpression = defaultExpression;
     }
 
-    public Element getXML(Document placement) {
+    Element getXML(Document placement) {
         Element parameter = placement.createElement("parameter");
         parameter.setAttribute("name", name);
         parameter.setAttribute("class", type);
         Element defaultValueExpression = placement.createElement("defaultValueExpression");
-        defaultValueExpression.appendChild(placement.createTextNode(ReportUtil.formatTextExpression(defaultExpression)));
+        defaultValueExpression.appendChild(ReportUtil.formatTextExpression(defaultExpression, placement));
         parameter.appendChild(defaultValueExpression);
         return parameter;
     }
 
-    public Element getDatasetParameterXML(Document placement) {
+    Element getDatasetParameterXML(Document placement) {
         Element datasetParameter = placement.createElement("datasetParameter");
         datasetParameter.setAttribute("name", name);
         Element expression = placement.createElement("datasetParameterExpression");
-        expression.appendChild(placement.createTextNode(ReportUtil.formatTextExpression("${" + name + "}")));
+        expression.appendChild(ReportUtil.formatTextExpression("$P{" + name + "}", placement));
         datasetParameter.appendChild(expression);
         return datasetParameter;
     }

@@ -1,6 +1,9 @@
+package ru.nivanov.jrbuilder.report;
+
+import ru.nivanov.jrbuilder.utils.ReportUtil;
+
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -22,14 +25,7 @@ public class ReportLoader {
         return report;
     }
 
-    public void saveReport() {
-        if (report == null) {
-            throw new IllegalStateException("report must be loaded");
-        }
-        report.update();
-    }
-
-    public void clearCurrentReport(){
+    private void clearCurrentReport(){
         report.update();
         report = null;
     }

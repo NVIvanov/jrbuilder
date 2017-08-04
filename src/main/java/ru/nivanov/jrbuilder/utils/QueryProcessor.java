@@ -1,7 +1,11 @@
+package ru.nivanov.jrbuilder.utils;
+
+import ru.nivanov.jrbuilder.report.Column;
+
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author nivanov
@@ -40,8 +44,8 @@ public class QueryProcessor {
         List<Column> result = new ArrayList<>();
         ResultSetMetaData metaData = resultSet.getMetaData();
         for (int i = 1; i <= metaData.getColumnCount(); i++) {
-            result.add(new Column(metaData.getColumnName(i), "${" + metaData.getColumnName(i) + "}",
-                    90, metaData.getColumnClassName(i)));
+            result.add(new Column(metaData.getColumnName(i), "$F{" + metaData.getColumnName(i) + "}",
+                    90, metaData.getColumnClassName(i), UUID.randomUUID().toString()));
         }
         resultSet.close();
         return result;

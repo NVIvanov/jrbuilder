@@ -1,5 +1,8 @@
+package ru.nivanov.jrbuilder.report;
+
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
+import ru.nivanov.jrbuilder.utils.ReportUtil;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -22,14 +25,10 @@ import java.util.List;
 public class DefaultReport implements Report {
     private File source;
     private Document document;
-    private volatile boolean queryUpdated = true;
-    private volatile boolean columnsUpdated = true;
-    private volatile boolean paramsUpdated = true;
     private List<Column> cachedColumns;
     private List<Parameter> cachedParameters;
-    private String cachedQuery;
 
-    public DefaultReport(File source) {
+    DefaultReport(File source) {
         this.source = source;
     }
 
@@ -39,14 +38,52 @@ public class DefaultReport implements Report {
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             document = builder.parse(source);
+            parseParameters();
+            parseColumns();
         } catch (ParserConfigurationException | IOException | SAXException e) {
             throw new RuntimeException("init exception", e);
         }
     }
 
+    private void parseColumns() {
+        List<Column> columns = new ArrayList<>();
+        NodeList columnNodes = document.getDocumentElement().getElementsByTagName("jr:column");
+        NodeList fields = document.getDocumentElement().getElementsByTagName("field");
+        for (int i = 0; i < columnNodes.getLength(); i++) {
+            Element columnNode = (Element) columnNodes.item(i);
+            Integer width = Integer.valueOf(columnNode.getAttribute("width"));
+            String uuid = columnNode.getAttribute("uuid");
+            String displayName = ReportUtil.parseTextExpression(columnNode.getElementsByTagName("text").item(0)
+                    .getFirstChild());
+            String function = ReportUtil.parseTextExpression(columnNode.getElementsByTagName("textFieldExpression")
+                    .item(0).getFirstChild());
+            String type = null;
+            for (int j = 0; j < fields.getLength(); j++) {
+                Element field = (Element) fields.item(j);
+                if (field.getAttribute("name").equals(displayName)) {
+                    type = field.getAttribute("class");
+                }
+            }
+            columns.add(new Column(displayName, function, width, type, uuid));
+        }
+        cachedColumns = columns;
+    }
+
+    private void parseParameters() {
+        List<Parameter> parameters = new ArrayList<>();
+        NodeList params = ((Element) document.getDocumentElement().getElementsByTagName("subDataset").item(0))
+                .getElementsByTagName("parameter");
+        for (int i = 0; i < params.getLength(); i++) {
+            Element param = (Element) params.item(i);
+            Node paramDefaultValue = param.getElementsByTagName("defaultValueExpression").item(0);
+            parameters.add(new Parameter(param.getAttribute("name"), param.getAttribute("class"),
+                    ReportUtil.parseTextExpression(paramDefaultValue.getFirstChild())));
+        }
+        cachedParameters = parameters;
+    }
+
     @Override
     public void setQuery(String query) {
-        queryUpdated = true;
         checkDocument();
         Element subDataset = getDatasetElement();
         NodeList queryList = subDataset.getElementsByTagName("queryString");
@@ -57,7 +94,8 @@ public class DefaultReport implements Report {
         } else {
             queryString = (Element) queryList.item(0);
         }
-        queryString.appendChild(document.createTextNode(ReportUtil.formatTextExpression(query).trim()));
+        queryString.removeChild(queryString.getFirstChild());
+        queryString.appendChild(ReportUtil.formatTextExpression(query.trim(), document));
     }
 
     @Override
@@ -67,20 +105,28 @@ public class DefaultReport implements Report {
 
     @Override
     public void addParameter(Parameter parameter) {
-        paramsUpdated = true;
+        cachedParameters.add(parameter);
+    }
+
+    private void writeParameter(Parameter parameter) {
         removeExistingParameter(parameter);
         Element parameterElement = parameter.getXML(document);
         document.getDocumentElement().appendChild(parameterElement);
         Element dataset = getDatasetElement();
-        dataset.appendChild(parameterElement);
+        dataset.insertBefore(parameterElement, dataset.getFirstChild());
+        document.getDocumentElement().insertBefore(parameterElement.cloneNode(true), dataset.getNextSibling());
         Element datasetParameter = parameter.getDatasetParameterXML(document);
         Node datasetRun = document.getDocumentElement().getElementsByTagName("datasetRun").item(0);
         datasetRun.insertBefore(datasetParameter, datasetRun.getFirstChild());
+        cachedParameters.add(parameter);
     }
 
     @Override
     public void addColumn(Column column) {
-        columnsUpdated = true;
+        cachedColumns.add(column);
+    }
+
+    private void writeColumn(Column column) {
         Element columnElement = column.writeColumn(document);
         Element fieldElement = column.writeField(document);
         Element table = (Element) document.getDocumentElement().getElementsByTagName("jr:table").item(0);
@@ -91,27 +137,37 @@ public class DefaultReport implements Report {
 
     @Override
     public void removeParameter(String parameterName) {
-        paramsUpdated = true;
-        Element dataset = getDatasetElement();
-        removeParameterFromNode(dataset, parameterName);
-        removeParameterFromNode(document.getDocumentElement(), parameterName);
-        Element datasetRun = (Element) document.getDocumentElement().getElementsByTagName("datasetRun").item(0);
-        removeParameterFromNode(datasetRun, parameterName);
+        cachedParameters.removeIf(parameter -> parameter.getName().equals(parameterName));
     }
 
     @Override
     public void removeColumn(String columnName) {
-        columnsUpdated = true;
-        NodeList fieldList = document.getDocumentElement().getElementsByTagName("field");
-        removeElementByNameFromNode(fieldList, "name", columnName);
-        Element table = (Element) document.getDocumentElement().getElementsByTagName("jr:table").item(0);
-        NodeList columnList = table.getElementsByTagName("jr:column");
-        removeElementByNameFromNode(columnList, "uuid", columnName);
+        cachedColumns.removeIf(column -> column.getDisplayName().equals(columnName));
+    }
+
+    private void removeColumnsFromDocument(){
+        Element dataset = getDatasetElement();
+        NodeList fields = dataset.getElementsByTagName("field");
+        removeAllFromDocument(fields);
+        NodeList columns = document.getDocumentElement().getElementsByTagName("jr:column");
+        removeAllFromDocument(columns);
+    }
+
+    private void removeParametersFromDocument(){
+        NodeList parameters = document.getDocumentElement().getElementsByTagName("parameter");
+        removeAllFromDocument(parameters);
+        NodeList datasetParameters = document.getDocumentElement().getElementsByTagName("datasetParameter");
+        removeAllFromDocument(datasetParameters);
+    }
+
+    private void removeAllFromDocument(NodeList nodes) {
+        for (int i = 0; i < nodes.getLength(); i++) {
+            nodes.item(i).getParentNode().removeChild(nodes.item(i));
+        }
     }
 
     @Override
     public void clearColumns() {
-        columnsUpdated = true;
         getColumns().forEach(column -> removeColumn(column.getDisplayName()));
     }
 
@@ -122,66 +178,25 @@ public class DefaultReport implements Report {
 
     @Override
     public String getQuery() {
-        if (queryUpdated) {
-            queryUpdated = false;
-            cachedQuery = ((Element) document.getDocumentElement().getElementsByTagName("subDataset").item(0))
-                    .getElementsByTagName("queryString").item(0).getTextContent().trim();
-        }
-        return cachedQuery;
+        return ReportUtil.parseTextExpression(((Element) document.getDocumentElement()
+                .getElementsByTagName("subDataset").item(0))
+                .getElementsByTagName("queryString").item(0).getFirstChild()).trim();
     }
 
     @Override
     public List<Parameter> getParameters() {
-        if (paramsUpdated) {
-            paramsUpdated = false;
-            List<Parameter> parameters = new ArrayList<>();
-            NodeList params = document.getDocumentElement().getElementsByTagName("parameter");
-            for (int i = 0; i < params.getLength(); i++) {
-                Element param = (Element) params.item(i);
-                Node paramDefaultValue = param.getElementsByTagName("defaultValueExpression").item(0);
-                parameters.add(new Parameter(param.getAttribute("name"), param.getAttribute("class"),
-                        ReportUtil.parseTextExpression(paramDefaultValue.getTextContent())));
-            }
-            cachedParameters = parameters;
-        }
         return cachedParameters;
     }
 
     @Override
     public List<Column> getColumns() {
-        if (columnsUpdated) {
-            columnsUpdated = false;
-            List<Column> columns = new ArrayList<>();
-            NodeList fields = ((Element)document.getDocumentElement().getElementsByTagName("subDataset").item(0))
-                    .getElementsByTagName("field");
-            NodeList columnNodes = document.getDocumentElement().getElementsByTagName("jr:column");
-            for (int i = 0; i < fields.getLength(); i++) {
-                Element column = (Element) fields.item(i);
-                String columnName = column.getAttribute("name");
-                Element columnInTable = null;
-                for (int j = 0; j < columnNodes.getLength(); j++) {
-                    columnInTable = (Element) columnNodes.item(j);
-                    if (columnInTable.getAttribute("uuid").equals(columnName)) {
-                        break;
-                    }
-                }
-                if (columnInTable == null) {
-                    throw new IllegalStateException("column can not be null!");
-                }
-                Element textFieldExpression = (Element) columnInTable.getElementsByTagName("textFieldExpression").item(0);
-                columns.add(new Column(column.getAttribute("name"),
-                        ReportUtil.parseTextExpression(textFieldExpression.getTextContent()),
-                        Integer.valueOf(columnInTable.getAttribute("width")),
-                        column.getAttribute("class")));
-            }
-            cachedColumns = columns;
-        }
         return cachedColumns;
     }
 
     @Override
     public void update() {
         try {
+            updateDocument();
             TransformerFactory transformerFactory =
                     TransformerFactory.newInstance();
             Transformer transformer =
@@ -200,6 +215,13 @@ public class DefaultReport implements Report {
         }
     }
 
+    private void updateDocument(){
+        removeColumnsFromDocument();
+        removeParametersFromDocument();
+        cachedColumns.forEach(this::writeColumn);
+        cachedParameters.forEach(this::writeParameter);
+    }
+
     private Element getDatasetElement() {
         NodeList datasetList = document.getDocumentElement().getElementsByTagName("subDataset");
         if (datasetList.getLength() == 0) {
@@ -208,24 +230,8 @@ public class DefaultReport implements Report {
         return (Element) datasetList.item(0);
     }
 
-    private void removeElementByNameFromNode(NodeList candidates, String attributeName, String value) {
-        for (int i = 0; i < candidates.getLength(); i++) {
-            Node node = candidates.item(i);
-            NamedNodeMap attributes = node.getAttributes();
-            if (attributes != null && attributes.getNamedItem(attributeName) != null &&
-                    attributes.getNamedItem(attributeName).getTextContent().equals(value)) {
-                node.getParentNode().removeChild(node);
-            }
-        }
-    }
-
     private void removeExistingParameter(Parameter parameter) {
         removeParameter(parameter.getName());
-    }
-
-    private void removeParameterFromNode(Node node, String name) {
-        NodeList parameterList = node.getChildNodes();
-        removeElementByNameFromNode(parameterList, "name", name);
     }
 
     private void checkDocument(){

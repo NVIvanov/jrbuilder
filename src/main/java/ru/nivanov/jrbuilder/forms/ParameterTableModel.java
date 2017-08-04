@@ -1,10 +1,20 @@
+package ru.nivanov.jrbuilder.forms;
+
+import ru.nivanov.jrbuilder.report.Parameter;
+import ru.nivanov.jrbuilder.report.Report;
+
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author nivanov
  *         on 03.08.17.
  */
 public class ParameterTableModel extends ReportTableModel {
 
-    public ParameterTableModel(Report report) {
+    ParameterTableModel(Report report) {
         super(report);
     }
 

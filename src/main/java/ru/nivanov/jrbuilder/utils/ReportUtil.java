@@ -1,8 +1,12 @@
+package ru.nivanov.jrbuilder.utils;
+
+import org.w3c.dom.CharacterData;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author nivanov
@@ -22,15 +26,13 @@ public final class ReportUtil {
         }
     }
 
-    public static String formatTextExpression(String text){
-        return "<![CDATA[" + text + "]]>";
+    public static Node formatTextExpression(String text, Document document){
+        return document.createCDATASection(text.trim());
     }
 
-    public static String parseTextExpression(String text) {
-        Pattern pattern = Pattern.compile("<!\\[CDATA\\[(.*)]]>");
-        Matcher matcher = pattern.matcher(text);
-        if (matcher.matches()) {
-            return matcher.group(1);
+    public static String parseTextExpression(Node textElement) {
+        if (textElement instanceof CharacterData) {
+            return ((CharacterData) textElement).getData().trim();
         } else {
             return "";
         }

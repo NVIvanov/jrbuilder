@@ -1,3 +1,7 @@
+package ru.nivanov.jrbuilder.forms;
+
+import ru.nivanov.jrbuilder.report.Report;
+
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -7,7 +11,7 @@ import javax.swing.table.AbstractTableModel;
 public abstract class ReportTableModel extends AbstractTableModel {
     protected Report report;
 
-    public ReportTableModel(Report report) {
+    ReportTableModel(Report report) {
         this.report = report;
     }
 }

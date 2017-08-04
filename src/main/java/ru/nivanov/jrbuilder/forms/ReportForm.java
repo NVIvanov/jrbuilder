@@ -1,3 +1,9 @@
+package ru.nivanov.jrbuilder.forms;
+
+import ru.nivanov.jrbuilder.report.Column;
+import ru.nivanov.jrbuilder.report.Report;
+import ru.nivanov.jrbuilder.utils.QueryProcessor;
+
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -17,28 +23,42 @@ public class ReportForm {
     private JTextArea queryArea;
     private JButton updateQueryButton;
     private JButton addParameterButton;
-    private Report report;
+    private JButton saveButton;
 
-    public ReportForm(Report report) {
+    ReportForm(Report report) {
         QueryProcessor processor = new QueryProcessor("jdbc:mysql://localhost/hybrisdb", "com.mysql.jdbc.Driver",
                 "hybrisuser", "hybrispassword");
-        this.report = report;
         JFrame frame = new JFrame("ReportForm");
         frame.setContentPane(reportForm);
         frame.setSize(900, 700);
         frame.setVisible(true);
+        frame.setLocationRelativeTo(null);
 
         queryArea.setText(report.getQuery());
         reportNameLabel.setText(report.getName());
         columnsTable.setModel(new ColumnTableModel(report));
         parametersTable.setModel(new ParameterTableModel(report));
 
+
+        JPopupMenu popup = new JPopupMenu();
+        JButton button = new JButton("Удалить");
+        button.addActionListener(e1 -> {
+            int rowIndex = parametersTable.getSelectedRow();
+            String parameterName =
+                    (String) parametersTable.getModel().getValueAt(rowIndex, 0);
+            report.removeParameter(parameterName);
+            ((ParameterTableModel)parametersTable.getModel()).fireTableDataChanged();
+        });
+        popup.add(button);
+        parametersTable.setComponentPopupMenu(popup);
+
         updateQueryButton.addActionListener(e -> new Thread(() -> {
             try {
                 List<Column> newColumns = processor.getColumns(queryArea.getText());
                 report.clearColumns();
                 newColumns.forEach(report::addColumn);
-                SwingUtilities.invokeAndWait(() -> columnsTable.updateUI());
+                report.setQuery(queryArea.getText().trim());
+                SwingUtilities.invokeLater(() -> ((ColumnTableModel) columnsTable.getModel()).fireTableDataChanged());
             } catch (SQLException e1) {
                 try {
                     SwingUtilities.invokeAndWait(() ->
@@ -46,8 +66,6 @@ public class ReportForm {
                 } catch (InterruptedException | InvocationTargetException e2) {
                     e2.printStackTrace();
                 }
-            } catch (InterruptedException | InvocationTargetException e1) {
-                e1.printStackTrace();
             }
         }).start());
 
@@ -62,5 +80,8 @@ public class ReportForm {
             });
             dialog.setVisible(true);
         });
+
+        saveButton.addActionListener(e -> report.update());
+
     }
 }

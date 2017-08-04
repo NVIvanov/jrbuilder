@@ -1,10 +1,15 @@
+package ru.nivanov.jrbuilder.forms;
+
+import ru.nivanov.jrbuilder.report.Column;
+import ru.nivanov.jrbuilder.report.Report;
+
 /**
  * @author nivanov
  *         on 03.08.17.
  */
 public class ColumnTableModel extends ReportTableModel {
 
-    public ColumnTableModel(Report report) {
+    ColumnTableModel(Report report) {
         super(report);
     }
 

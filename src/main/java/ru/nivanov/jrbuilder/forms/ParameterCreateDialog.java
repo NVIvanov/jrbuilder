@@ -1,3 +1,8 @@
+package ru.nivanov.jrbuilder.forms;
+
+import ru.nivanov.jrbuilder.report.Parameter;
+import ru.nivanov.jrbuilder.report.Report;
+
 import javax.swing.*;
 import java.awt.event.*;
 
@@ -10,12 +15,14 @@ public class ParameterCreateDialog extends JDialog {
     private JTextField defaultExpressionField;
     private Report report;
 
-    public ParameterCreateDialog(Report report) {
+    ParameterCreateDialog(Report report) {
         this.report = report;
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
         setTitle("Добавление параметра");
+        setSize(400, 300);
+        setLocationRelativeTo(null);
         buttonOK.addActionListener(e -> onOK());
         buttonCancel.addActionListener(e -> onCancel());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);

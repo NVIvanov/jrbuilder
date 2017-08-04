@@ -1,3 +1,8 @@
+package ru.nivanov.jrbuilder.forms;
+
+import ru.nivanov.jrbuilder.report.Report;
+import ru.nivanov.jrbuilder.report.ReportLoader;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.IOException;
@@ -11,7 +16,7 @@ public class LoadForm {
     private JButton createReportButton;
     private JPanel loadForm;
 
-    public LoadForm() {
+    private LoadForm() {
         ReportLoader reportLoader = new ReportLoader();
         JFileChooser fc = new JFileChooser(System.getProperty("user.home"));
         createReportButton.addActionListener(e -> {
@@ -46,6 +51,7 @@ public class LoadForm {
         frame.setContentPane(new LoadForm().loadForm);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 }
