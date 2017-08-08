@@ -30,7 +30,7 @@ public class QueryProcessor {
     public List<Column> getColumns(String query) throws SQLException {
         Connection connection;
         Statement statement;
-        query = query.replaceAll("\\$\\{.*}", "NULL");
+        query = query.replaceAll("\\$P\\{[\\w]*}", "NULL");
         connection = DriverManager.getConnection(dataSourceUrl, username, password);
         statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(query);
@@ -45,9 +45,17 @@ public class QueryProcessor {
         ResultSetMetaData metaData = resultSet.getMetaData();
         for (int i = 1; i <= metaData.getColumnCount(); i++) {
             result.add(new Column(metaData.getColumnName(i), "$F{" + metaData.getColumnName(i) + "}",
-                    90, metaData.getColumnClassName(i), UUID.randomUUID().toString()));
+                    90, prepareClassName(metaData.getColumnClassName(i)),
+                    UUID.randomUUID().toString(), "#000000"));
         }
         resultSet.close();
         return result;
+    }
+
+    private String prepareClassName(String className) {
+        if (className.equals("java.sql.Date") || className.equals("java.sql.Timestamp")) {
+            return "java.lang.String";
+        }
+        return className;
     }
 }

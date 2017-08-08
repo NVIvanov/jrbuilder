@@ -26,7 +26,6 @@ public class ReportLoader {
     }
 
     private void clearCurrentReport(){
-        report.update();
         report = null;
     }
 
@@ -35,6 +34,7 @@ public class ReportLoader {
         Files.copy(Paths.get(defaultTemplatePath), Paths.get(path), StandardCopyOption.REPLACE_EXISTING);
         report = loadReport(path);
         report.setName(getFileName(path));
+        report.update();
         clearCurrentReport();
     }
 

@@ -3,16 +3,12 @@ package ru.nivanov.jrbuilder.forms;
 import ru.nivanov.jrbuilder.report.Parameter;
 import ru.nivanov.jrbuilder.report.Report;
 
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author nivanov
  *         on 03.08.17.
  */
 public class ParameterTableModel extends ReportTableModel {
+    private String[] columnNames = {"Имя", "Тип", "Значение по умолчанию"};
 
     ParameterTableModel(Report report) {
         super(report);
@@ -30,14 +26,7 @@ public class ParameterTableModel extends ReportTableModel {
 
     @Override
     public String getColumnName(int column) {
-        switch (column) {
-            case 1:
-                return "Тип";
-            case 2:
-                return "Значение по умолчанию";
-            default:
-                return "Наименование";
-        }
+        return columnNames[column];
     }
 
     @Override
@@ -51,5 +40,26 @@ public class ParameterTableModel extends ReportTableModel {
             default:
                 return parameter.getName();
         }
+    }
+
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return true;
+    }
+
+    @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        Parameter parameter = report.getParameters().get(rowIndex);
+        switch (columnIndex) {
+            case 1:
+                parameter.setType(String.valueOf(aValue));
+                break;
+            case 2:
+                parameter.setDefaultExpression(String.valueOf(aValue));
+                break;
+            default:
+                parameter.setName(String.valueOf(aValue));
+        }
+        fireTableDataChanged();
     }
 }

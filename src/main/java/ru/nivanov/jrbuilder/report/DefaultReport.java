@@ -1,6 +1,9 @@
 package ru.nivanov.jrbuilder.report;
 
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import ru.nivanov.jrbuilder.utils.ReportUtil;
 
@@ -57,6 +60,8 @@ public class DefaultReport implements Report {
                     .getFirstChild());
             String function = ReportUtil.parseTextExpression(columnNode.getElementsByTagName("textFieldExpression")
                     .item(0).getFirstChild());
+            String color = ((Element)((Element)columnNode.getElementsByTagName("textField").item(0))
+                    .getElementsByTagName("reportElement").item(0)).getAttribute("forecolor");
             String type = null;
             for (int j = 0; j < fields.getLength(); j++) {
                 Element field = (Element) fields.item(j);
@@ -64,7 +69,7 @@ public class DefaultReport implements Report {
                     type = field.getAttribute("class");
                 }
             }
-            columns.add(new Column(displayName, function, width, type, uuid));
+            columns.add(new Column(displayName, function, width, type, uuid, color));
         }
         cachedColumns = columns;
     }
@@ -109,7 +114,6 @@ public class DefaultReport implements Report {
     }
 
     private void writeParameter(Parameter parameter) {
-        removeExistingParameter(parameter);
         Element parameterElement = parameter.getXML(document);
         document.getDocumentElement().appendChild(parameterElement);
         Element dataset = getDatasetElement();
@@ -118,7 +122,6 @@ public class DefaultReport implements Report {
         Element datasetParameter = parameter.getDatasetParameterXML(document);
         Node datasetRun = document.getDocumentElement().getElementsByTagName("datasetRun").item(0);
         datasetRun.insertBefore(datasetParameter, datasetRun.getFirstChild());
-        cachedParameters.add(parameter);
     }
 
     @Override
@@ -148,27 +151,66 @@ public class DefaultReport implements Report {
     private void removeColumnsFromDocument(){
         Element dataset = getDatasetElement();
         NodeList fields = dataset.getElementsByTagName("field");
-        removeAllFromDocument(fields);
-        NodeList columns = document.getDocumentElement().getElementsByTagName("jr:column");
-        removeAllFromDocument(columns);
+        List<String> columnNames = new ArrayList<>();
+        for (int i = 0; i < fields.getLength(); i++) {
+            Element column = (Element) fields.item(i);
+            columnNames.add(column.getAttribute("name"));
+        }
+        columnNames.forEach(this::removeColumnFromDocument);
+    }
+
+    private void removeColumnFromDocument(String columnName){
+        NodeList fieldList = document.getDocumentElement().getElementsByTagName("field");
+        removeElementByNameFromNode(fieldList, columnName);
+        Element table = (Element) document.getDocumentElement().getElementsByTagName("jr:table").item(0);
+        NodeList columnList = table.getElementsByTagName("jr:column");
+        for (int i = 0; i < columnList.getLength(); i++) {
+            Element columnNode = (Element) columnList.item(i);
+            if (columnNode.getElementsByTagName("text").item(0).getTextContent().equals(columnName)) {
+                columnNode.getParentNode().removeChild(columnNode);
+            }
+        }
+    }
+
+    private void removeParameterFromDocument(String parameterName) {
+        Element dataset = getDatasetElement();
+        removeParameterFromNode(dataset, parameterName);
+        removeParameterFromNode(document.getDocumentElement(), parameterName);
+        Element datasetRun = (Element) document.getDocumentElement().getElementsByTagName("datasetRun").item(0);
+        NodeList parameterList = datasetRun.getElementsByTagName("datasetParameter");
+        removeElementByNameFromNode(parameterList, parameterName);
+    }
+
+    private void removeParameterFromNode(Element node, String name) {
+        NodeList parameterList = node.getElementsByTagName("parameter");
+        removeElementByNameFromNode(parameterList, name);
+    }
+
+    private void removeElementByNameFromNode(NodeList candidates, String value) {
+        for (int i = 0; i < candidates.getLength(); i++) {
+            if (candidates.item(i) instanceof Element) {
+                Element node = (Element) candidates.item(i);
+                if (node.getAttribute("name").equals(value)) {
+                    node.getParentNode().removeChild(node);
+                }
+            }
+        }
     }
 
     private void removeParametersFromDocument(){
-        NodeList parameters = document.getDocumentElement().getElementsByTagName("parameter");
-        removeAllFromDocument(parameters);
-        NodeList datasetParameters = document.getDocumentElement().getElementsByTagName("datasetParameter");
-        removeAllFromDocument(datasetParameters);
-    }
-
-    private void removeAllFromDocument(NodeList nodes) {
-        for (int i = 0; i < nodes.getLength(); i++) {
-            nodes.item(i).getParentNode().removeChild(nodes.item(i));
+        Element dataset = getDatasetElement();
+        NodeList parameters = dataset.getElementsByTagName("parameter");
+        List<String> parameterNames = new ArrayList<>();
+        for (int i = 0; i < parameters.getLength(); i++) {
+            Element parameter = (Element) parameters.item(i);
+            parameterNames.add(parameter.getAttribute("name"));
         }
+        parameterNames.forEach(this::removeParameterFromDocument);
     }
 
     @Override
     public void clearColumns() {
-        getColumns().forEach(column -> removeColumn(column.getDisplayName()));
+        cachedColumns = new ArrayList<>();
     }
 
     @Override
@@ -220,6 +262,7 @@ public class DefaultReport implements Report {
         removeParametersFromDocument();
         cachedColumns.forEach(this::writeColumn);
         cachedParameters.forEach(this::writeParameter);
+        document.normalizeDocument();
     }
 
     private Element getDatasetElement() {
@@ -228,10 +271,6 @@ public class DefaultReport implements Report {
             throw new IllegalStateException("template has not any dataset");
         }
         return (Element) datasetList.item(0);
-    }
-
-    private void removeExistingParameter(Parameter parameter) {
-        removeParameter(parameter.getName());
     }
 
     private void checkDocument(){

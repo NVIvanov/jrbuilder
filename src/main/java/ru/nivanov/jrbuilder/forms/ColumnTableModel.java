@@ -3,11 +3,19 @@ package ru.nivanov.jrbuilder.forms;
 import ru.nivanov.jrbuilder.report.Column;
 import ru.nivanov.jrbuilder.report.Report;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
+import java.awt.image.ImageProducer;
+
+import static java.lang.Integer.toHexString;
+
 /**
  * @author nivanov
  *         on 03.08.17.
  */
 public class ColumnTableModel extends ReportTableModel {
+    private String[] columnNames = {"Имя", "Тип", "Ширина", "Функция отображения", "Цвет"};
 
     ColumnTableModel(Report report) {
         super(report);
@@ -20,21 +28,12 @@ public class ColumnTableModel extends ReportTableModel {
 
     @Override
     public int getColumnCount() {
-        return 4;
+        return 5;
     }
 
     @Override
     public String getColumnName(int column) {
-        switch (column) {
-            case 1:
-                return "Тип";
-            case 2:
-                return "Ширина";
-            case 3:
-                return "Функция отображения";
-            default:
-                return "Отображаемое имя";
-        }
+        return columnNames[column];
     }
 
     @Override
@@ -47,6 +46,8 @@ public class ColumnTableModel extends ReportTableModel {
                 return column.getWidth();
             case 3:
                 return column.getValueFunction();
+            case 4:
+                return column.getColor();
             default:
                 return column.getDisplayName();
         }
@@ -54,6 +55,41 @@ public class ColumnTableModel extends ReportTableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex != 0;
+        return true;
+    }
+
+    @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        Column column = report.getColumns().get(rowIndex);
+        switch (columnIndex) {
+            case 1:
+                column.setType(String.valueOf(aValue));
+                break;
+            case 2:
+                try {
+                    column.setWidth(Integer.valueOf(String.valueOf(aValue)));
+                } catch (Exception ignored) {}
+                break;
+            case 3:
+                column.setValueFunction(String.valueOf(aValue));
+                break;
+            case 4:
+                Color color = (Color) aValue;
+                column.setColor(rgbString(color.getRed(), color.getGreen(), color.getBlue()));
+                break;
+            default:
+                column.setDisplayName(String.valueOf(aValue));
+        }
+    }
+
+    private String rgbString(int r, int g, int b) {
+        return ("#" + getRGBCodeElement(r) + getRGBCodeElement(g) + getRGBCodeElement(b)).toUpperCase();
+    }
+
+    private String getRGBCodeElement(int digit) {
+        String code = Integer.toHexString(digit);
+        if (code.length() == 1)
+            return "0" + code;
+        return code;
     }
 }

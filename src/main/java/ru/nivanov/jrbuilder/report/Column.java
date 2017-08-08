@@ -9,15 +9,16 @@ import ru.nivanov.jrbuilder.utils.ReportUtil;
  *         on 31.07.17.
  */
 public class Column {
-    private String displayName, valueFunction, type, uuid;
+    private String displayName, valueFunction, type, uuid, color;
     private Integer width;
 
-    public Column(String displayName, String valueFunction, Integer width, String type, String uuid) {
+    public Column(String displayName, String valueFunction, Integer width, String type, String uuid, String color) {
         this.displayName = displayName;
         this.valueFunction = valueFunction;
         this.width = width;
         this.type = type;
         this.uuid = uuid;
+        this.color = color;
     }
 
     Element writeField(Document placement) {
@@ -49,7 +50,7 @@ public class Column {
         textField.setAttribute("isStretchWithOverflow", "true");
         textField.setAttribute("isBlankWhenNull","true");
 
-        Element reportElement = createReportElement(placement, 20);
+        Element reportElement = createReportElement(placement, 20, color);
         Element textElement = createTextElement(placement);
         Element textFieldExpression = placement.createElement("textFieldExpression");
         textFieldExpression.appendChild(ReportUtil.formatTextExpression(valueFunction, placement));
@@ -65,7 +66,7 @@ public class Column {
         columnHeader.setAttribute("style", "table_CH");
         columnHeader.setAttribute("height", "30");
         Element staticText = placement.createElement("staticText");
-        Element reportElement = createReportElement(placement,30);
+        Element reportElement = createReportElement(placement,30, null);
         Element textElement = createTextElement(placement);
         Element text = placement.createElement("text");
         text.appendChild(ReportUtil.formatTextExpression(displayName, placement));
@@ -83,12 +84,15 @@ public class Column {
         return textElement;
     }
 
-    private Element createReportElement(Document placement, Integer height) {
+    private Element createReportElement(Document placement, Integer height, String color) {
         Element reportElement = placement.createElement("reportElement");
         reportElement.setAttribute("x","0");
         reportElement.setAttribute("y", "0");
         reportElement.setAttribute("width", width.toString());
         reportElement.setAttribute("height", height.toString());
+        if (color != null && !color.isEmpty()) {
+            reportElement.setAttribute("forecolor", color);
+        }
         return reportElement;
     }
 
@@ -118,4 +122,31 @@ public class Column {
         return width;
     }
 
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public void setValueFunction(String valueFunction) {
+        this.valueFunction = valueFunction;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setWidth(Integer width) {
+        this.width = width;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
 }

@@ -47,7 +47,7 @@ public class LoadForm {
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("LoadForm");
+        JFrame frame = new JFrame("JRBuilder");
         frame.setContentPane(new LoadForm().loadForm);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
