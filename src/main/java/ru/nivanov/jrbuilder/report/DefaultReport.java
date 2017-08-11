@@ -61,7 +61,7 @@ public class DefaultReport implements Report {
             String function = ReportUtil.parseTextExpression(columnNode.getElementsByTagName("textFieldExpression")
                     .item(0).getFirstChild());
             String color = ((Element)((Element)columnNode.getElementsByTagName("textField").item(0))
-                    .getElementsByTagName("reportElement").item(0)).getAttribute("forecolor");
+                    .getElementsByTagName("reportElement").item(0)).getAttribute("backcolor");
             String type = null;
             for (int j = 0; j < fields.getLength(); j++) {
                 Element field = (Element) fields.item(j);

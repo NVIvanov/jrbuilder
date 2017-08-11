@@ -91,7 +91,7 @@ public class Column {
         reportElement.setAttribute("width", width.toString());
         reportElement.setAttribute("height", height.toString());
         if (color != null && !color.isEmpty()) {
-            reportElement.setAttribute("forecolor", color);
+            reportElement.setAttribute("backcolor", color);
         }
         return reportElement;
     }

@@ -50,10 +50,6 @@ public class ParameterCreateDialog extends JDialog {
     }
 
     private void createUIComponents() {
-        String[] types = new String[]{
-                "java.lang.Integer", "java.lang.Double", "java.lang.Byte", "java.lang.Short", "java.lang.Float",
-                "java.lang.String", "java.util.Date", "java.sql.Timestamp"
-        };
-        typeBox = new JComboBox<>(types);
+        typeBox = new TypeComboBox();
     }
 }

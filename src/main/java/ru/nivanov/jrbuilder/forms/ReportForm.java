@@ -30,36 +30,23 @@ public class ReportForm {
     ReportForm(Report report) {
         QueryProcessor processor = new QueryProcessor(getProperty("default.datasource"), "com.mysql.jdbc.Driver",
                 getProperty("datasource.username"), getProperty("datasource.password"));
+        setUpStaticData(report);
+        setUpColumnsTable(report);
+        setUpParametersTable(report);
+        setUpActions(report, processor);
+    }
+
+    private void setUpStaticData(Report report) {
         JFrame frame = new JFrame("JRBuilder");
         frame.setContentPane(reportForm);
         frame.setSize(900, 700);
         frame.setVisible(true);
         frame.setLocationRelativeTo(null);
-
         queryArea.setText(report.getQuery());
         reportNameLabel.setText(report.getName());
-        columnsTable.setModel(new ColumnTableModel(report));
-        columnsTable.getColumnModel().getColumn(4).setCellEditor(new ColorChooserEditor());
-        parametersTable.setModel(new ParameterTableModel(report));
-        String[] types = new String[]{
-                "java.lang.Integer", "java.lang.Double", "java.lang.Byte", "java.lang.Short", "java.lang.Float",
-                "java.lang.String", "java.util.Date", "java.sql.Timestamp"
-        };
-        parametersTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(
-                new JComboBox<>(types)));
+    }
 
-        JPopupMenu popup = new JPopupMenu();
-        JButton button = new JButton("Удалить");
-        button.addActionListener(e1 -> {
-            int rowIndex = parametersTable.getSelectedRow();
-            String parameterName =
-                    (String) parametersTable.getModel().getValueAt(rowIndex, 0);
-            report.removeParameter(parameterName);
-            ((ParameterTableModel)parametersTable.getModel()).fireTableDataChanged();
-        });
-        popup.add(button);
-        parametersTable.setComponentPopupMenu(popup);
-
+    private void setUpActions(Report report, QueryProcessor processor) {
         updateQueryButton.addActionListener(e -> new Thread(() -> {
             try {
                 List<Column> newColumns = processor.getColumns(queryArea.getText());
@@ -90,6 +77,28 @@ public class ReportForm {
         });
 
         saveButton.addActionListener(e -> report.update());
+    }
 
+    private void setUpColumnsTable(Report report) {
+        columnsTable.setModel(new ColumnTableModel(report));
+        columnsTable.getColumnModel().getColumn(4).setCellEditor(new ColorChooserEditor());
+        columnsTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(new TypeComboBox()));
+    }
+
+    private void setUpParametersTable(Report report) {
+        parametersTable.setModel(new ParameterTableModel(report));
+        parametersTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(
+                new TypeComboBox()));
+        JPopupMenu popup = new JPopupMenu();
+        JButton button = new JButton("Удалить");
+        button.addActionListener(e1 -> {
+            int rowIndex = parametersTable.getSelectedRow();
+            String parameterName =
+                    (String) parametersTable.getModel().getValueAt(rowIndex, 0);
+            report.removeParameter(parameterName);
+            ((ParameterTableModel)parametersTable.getModel()).fireTableDataChanged();
+        });
+        popup.add(button);
+        parametersTable.setComponentPopupMenu(popup);
     }
 }
