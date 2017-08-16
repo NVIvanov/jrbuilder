@@ -29,7 +29,7 @@ public final class ReportUtil {
 
     static {
         try {
-            properties = new PropertiesConfiguration("src/main/resources/application.properties");
+            properties = new PropertiesConfiguration("application.properties");
             properties.setListDelimiter(DEFAULT_LIST_DELIMITER);
         } catch (ConfigurationException e) {
             e.printStackTrace();

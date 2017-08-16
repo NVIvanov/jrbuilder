@@ -3,7 +3,6 @@ package ru.nivanov.jrbuilder.forms;
 import ru.nivanov.jrbuilder.utils.DataSource;
 import ru.nivanov.jrbuilder.utils.ReportUtil;
 
-import javax.annotation.Nonnull;
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +63,7 @@ public class DatasourceTableModel extends AbstractTableModel {
         return true;
     }
 
-    void addDataSource(@Nonnull String name, @Nonnull String url) {
+    void addDataSource(String name, String url) {
         if (name.isEmpty() || url.isEmpty()) {
             throw new IllegalArgumentException("name and url must not be empty");
         }
