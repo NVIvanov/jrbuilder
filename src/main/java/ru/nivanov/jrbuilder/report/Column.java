@@ -122,10 +122,6 @@ public class Column {
         return width;
     }
 
-    public String getUuid() {
-        return uuid;
-    }
-
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }

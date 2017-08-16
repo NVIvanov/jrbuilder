@@ -145,11 +145,6 @@ public class DefaultReport implements Report {
         cachedParameters.removeIf(parameter -> parameter.getName().equals(parameterName));
     }
 
-    @Override
-    public void removeColumn(String columnName) {
-        cachedColumns.removeIf(column -> column.getDisplayName().equals(columnName));
-    }
-
     private void removeColumnsFromDocument(){
         Element dataset = getDatasetElement();
         NodeList fields = dataset.getElementsByTagName("field");

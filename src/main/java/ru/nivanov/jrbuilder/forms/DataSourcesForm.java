@@ -19,14 +19,38 @@ public class DataSourcesForm extends JDialog {
 
     DataSourcesForm(ReportForm parent) {
         this.parent = parent;
+        setUpStatic();
+        setUpActions();
+        setUpTable();
+        setUpDialogListeners(parent);
+    }
+
+    private void setUpStatic() {
         setContentPane(dataSourcesForm);
         setTitle("Data sources");
         setSize(600, 400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setVisible(true);
-        dataSourceTable.setModel(new DatasourceTableModel());
+    }
 
+    private void setUpTable() {
+        dataSourceTable.setModel(new DatasourceTableModel());
+        JPopupMenu popup = new JPopupMenu();
+        JButton button = new JButton("Удалить");
+        button.addActionListener(e1 -> {
+            int rowIndex = dataSourceTable.getSelectedRow();
+            String dataSourceName =
+                    (String) dataSourceTable.getModel().getValueAt(rowIndex, 0);
+            ((DatasourceTableModel) dataSourceTable.getModel()).removeDataSource(dataSourceName);
+            dataSourceTable.updateUI();
+            popup.setVisible(false);
+        });
+        popup.add(button);
+        dataSourceTable.setComponentPopupMenu(popup);
+    }
+
+    private void setUpActions() {
         ActionListener listener = e -> {
             if (titleField.getText().isEmpty() || jdbcField.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(dataSourcesForm, "Название или URL источника не должны быть пустыми");
@@ -43,31 +67,14 @@ public class DataSourcesForm extends JDialog {
         buttonSave.addActionListener(listener);
         jdbcField.addActionListener(listener);
         titleField.addActionListener(e -> jdbcField.grabFocus());
+    }
 
+    private void setUpDialogListeners(ReportForm parent) {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 ((DatasourceTableModel) dataSourceTable.getModel()).updateDatasourceList();
-                super.windowClosing(e);
                 parent.update();
-            }
-        });
-
-        JPopupMenu popup = new JPopupMenu();
-        JButton button = new JButton("Удалить");
-        button.addActionListener(e1 -> {
-            int rowIndex = dataSourceTable.getSelectedRow();
-            String dataSourceName =
-                    (String) dataSourceTable.getModel().getValueAt(rowIndex, 0);
-            ((DatasourceTableModel) dataSourceTable.getModel()).removeDataSource(dataSourceName);
-            dataSourceTable.updateUI();
-            popup.setVisible(false);
-        });
-        popup.add(button);
-        dataSourceTable.setComponentPopupMenu(popup);
-
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
                 onCancel();
             }
         });

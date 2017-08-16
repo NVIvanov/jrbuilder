@@ -4,11 +4,6 @@ import ru.nivanov.jrbuilder.report.Column;
 import ru.nivanov.jrbuilder.report.Report;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
-import java.awt.image.ImageProducer;
-
-import static java.lang.Integer.toHexString;
 
 /**
  * @author nivanov

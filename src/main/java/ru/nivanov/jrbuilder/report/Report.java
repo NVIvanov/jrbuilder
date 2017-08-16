@@ -13,7 +13,6 @@ public interface Report {
     void addParameter(Parameter parameter);
     void addColumn(Column column);
     void removeParameter(String parameterName);
-    void removeColumn(String columnName);
     void clearColumns();
     String getName();
     String getQuery();
