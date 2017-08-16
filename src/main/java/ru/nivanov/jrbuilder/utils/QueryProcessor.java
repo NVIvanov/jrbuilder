@@ -4,6 +4,7 @@ import ru.nivanov.jrbuilder.report.Column;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,16 +29,17 @@ public class QueryProcessor {
     }
 
     public List<Column> getColumns(String query) throws SQLException {
-        Connection connection;
-        Statement statement;
-        query = query.replaceAll("\\$P\\{[\\w]*}", "NULL");
-        connection = DriverManager.getConnection(dataSourceUrl, username, password);
-        statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(query);
-        List<Column> columns = getColumns(resultSet);
-        statement.close();
-        connection.close();
-        return columns;
+        List<Column> columns;
+        try (Connection connection = DriverManager.getConnection(dataSourceUrl, username, password);
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(createQuery(query))) {
+            columns = getColumns(resultSet);
+        }
+        return columns == null ? Collections.emptyList() : columns;
+    }
+
+    private String createQuery(String template) {
+        return template.replaceAll("\\$P\\{[\\w]*}", "NULL");
     }
 
     private List<Column> getColumns(ResultSet resultSet) throws SQLException {
@@ -46,9 +48,8 @@ public class QueryProcessor {
         for (int i = 1; i <= metaData.getColumnCount(); i++) {
             result.add(new Column(metaData.getColumnName(i), "$F{" + metaData.getColumnName(i) + "}",
                     90, prepareClassName(metaData.getColumnClassName(i)),
-                    UUID.randomUUID().toString(), "#000000"));
+                    UUID.randomUUID().toString(), "#FFFFFF"));
         }
-        resultSet.close();
         return result;
     }
 
