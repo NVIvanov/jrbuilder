@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,6 +57,13 @@ public class ReportForm {
         frame.setLocationRelativeTo(null);
         queryArea.setText(report.getQuery());
         reportNameLabel.setText(report.getName());
+
+        queryArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                report.setQuery(queryArea.getText());
+            }
+        });
     }
 
     private void setUpActions() {
@@ -270,9 +278,7 @@ public class ReportForm {
                     List<Column> newColumns = new QueryProcessor(dataSource.getUrl(), "com.mysql.jdbc.Driver",
                             getProperty("datasource.username"), getProperty("datasource.password"))
                             .getColumns(queryArea.getText());
-                    report.clearColumns();
-                    newColumns.forEach(report::addColumn);
-                    report.setQuery(queryArea.getText().trim());
+                    updateColumns(newColumns);
                     SwingUtilities.invokeLater(this::unlockUI);
                 } catch (SQLException e1) {
                     try {
@@ -285,6 +291,20 @@ public class ReportForm {
                     }
                 }
             }).start();
+        }
+
+        private void updateColumns(List<Column> newColumns) {
+            List<Column> currentColumns = report.getColumns();
+            newColumns = new ArrayList<>(newColumns);
+            newColumns.replaceAll(column -> {
+                if (currentColumns.contains(column)) {
+                    return currentColumns.get(currentColumns.indexOf(column));
+                }
+                return column;
+            });
+            report.clearColumns();
+            newColumns.forEach(report::addColumn);
+            report.setQuery(queryArea.getText().trim());
         }
 
         private void unlockUI() {

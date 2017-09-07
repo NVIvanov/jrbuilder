@@ -145,4 +145,19 @@ public class Column {
     public void setColor(String color) {
         this.color = color;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Column)) return false;
+
+        Column column = (Column) o;
+
+        return getDisplayName().equals(column.getDisplayName());
+    }
+
+    @Override
+    public int hashCode() {
+        return getDisplayName().hashCode();
+    }
 }
