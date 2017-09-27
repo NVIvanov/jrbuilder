@@ -83,8 +83,10 @@ public class DefaultReport implements Report {
         for (int i = 0; i < params.getLength(); i++) {
             Element param = (Element) params.item(i);
             Node paramDefaultValue = param.getElementsByTagName("defaultValueExpression").item(0);
-            parameters.add(new Parameter(param.getAttribute("name"), param.getAttribute("class"),
-                    ReportUtil.parseTextExpression(paramDefaultValue.getFirstChild())));
+            parameters.add(new Parameter(param.getAttribute("name"),
+                    param.getAttribute("class"),
+                    paramDefaultValue != null ? ReportUtil.parseTextExpression(paramDefaultValue.getFirstChild()):
+                                                ""));
         }
         cachedParameters = parameters;
     }
@@ -143,6 +145,11 @@ public class DefaultReport implements Report {
     @Override
     public void removeParameter(String parameterName) {
         cachedParameters.removeIf(parameter -> parameter.getName().equals(parameterName));
+    }
+
+    @Override
+    public void removeColumn(String columnName) {
+        cachedColumns.removeIf(column -> column.getDisplayName().equals(columnName));
     }
 
     private void removeColumnsFromDocument(){
@@ -242,9 +249,7 @@ public class DefaultReport implements Report {
                     transformerFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
             transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
             DOMSource source = new DOMSource(document);
             StreamResult result =
                     new StreamResult(this.source);

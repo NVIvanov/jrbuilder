@@ -10,6 +10,7 @@ import ru.nivanov.jrbuilder.utils.ReportUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DropTarget;
 import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
@@ -21,7 +22,7 @@ import static ru.nivanov.jrbuilder.utils.ReportUtil.*;
 
 /**
  * @author nivanov
- *         on 02.08.17.
+ * on 02.08.17.
  */
 public class ReportForm {
     private JPanel reportForm;
@@ -133,10 +134,24 @@ public class ReportForm {
         columnsTable.setModel(new ColumnTableModel(report));
         columnsTable.getColumnModel().getColumn(4).setCellEditor(new ColorChooserEditor());
         columnsTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(new TypeComboBox()));
+        JPopupMenu popup = new JPopupMenu();
+        JButton button = new JButton("Удалить");
+        button.addActionListener(e1 -> {
+            int rowIndex = columnsTable.getSelectedRow();
+            String columnName =
+                    (String) columnsTable.getModel().getValueAt(rowIndex, 0);
+            report.removeColumn(columnName);
+            columnsTable.updateUI();
+            popup.setVisible(false);
+        });
+        popup.add(button);
+        columnsTable.setComponentPopupMenu(popup);
     }
 
     private void setUpParametersTable() {
         parametersTable.setModel(new ParameterTableModel(report));
+        parametersTable.setDragEnabled(true);
+        parametersTable.setTransferHandler(new TableTransferHandler<ParameterTableModel>());
         parametersTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(
                 new TypeComboBox()));
         JPopupMenu popup = new JPopupMenu();
@@ -171,7 +186,8 @@ public class ReportForm {
         reportForm = new JPanel();
         reportForm.setLayout(new GridBagLayout());
         reportNameLabel = new JLabel();
-        reportNameLabel.setFont(new Font(reportNameLabel.getFont().getName(), reportNameLabel.getFont().getStyle(), 16));
+        Font reportNameLabelFont = this.$$$getFont$$$(null, -1, 16, reportNameLabel.getFont());
+        if (reportNameLabelFont != null) reportNameLabel.setFont(reportNameLabelFont);
         reportNameLabel.setText("Label");
         GridBagConstraints gbc;
         gbc = new GridBagConstraints();
@@ -180,7 +196,8 @@ public class ReportForm {
         gbc.weightx = 5.0;
         reportForm.add(reportNameLabel, gbc);
         queryArea = new JTextArea();
-        queryArea.setFont(new Font("Courier New", queryArea.getFont().getStyle(), 14));
+        Font queryAreaFont = this.$$$getFont$$$("Courier New", -1, 14, queryArea.getFont());
+        if (queryAreaFont != null) queryArea.setFont(queryAreaFont);
         queryArea.setLineWrap(true);
         queryArea.setMargin(new Insets(10, 10, 10, 10));
         queryArea.setToolTipText("Введите SQL-запрос");
@@ -253,6 +270,25 @@ public class ReportForm {
         gbc.anchor = GridBagConstraints.EAST;
         reportForm.add(dataSourcesButton, gbc);
         reportNameLabel.setLabelFor(scrollPane1);
+    }
+
+    /**
+     * @noinspection ALL
+     */
+    private Font $$$getFont$$$(String fontName, int style, int size, Font currentFont) {
+        if (currentFont == null) return null;
+        String resultName;
+        if (fontName == null) {
+            resultName = currentFont.getName();
+        } else {
+            Font testFont = new Font(fontName, Font.PLAIN, 10);
+            if (testFont.canDisplay('a') && testFont.canDisplay('1')) {
+                resultName = fontName;
+            } else {
+                resultName = currentFont.getName();
+            }
+        }
+        return new Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());
     }
 
     /**
