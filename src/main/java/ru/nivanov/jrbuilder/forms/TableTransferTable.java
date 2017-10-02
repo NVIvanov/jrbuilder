@@ -24,7 +24,7 @@ class TableTransferHandler<M extends ReportTableModel> extends StringTransferHan
         for (int row :
                 rows) {
             String itemName = (String) tableModel.getValueAt(row, 0);
-            sb.append("${").append(itemName).append("}").append(", ");
+            sb.append("$P{").append(itemName).append("}").append(", ");
         }
         sb.setLength(sb.length() - 2);
         return sb.toString();
